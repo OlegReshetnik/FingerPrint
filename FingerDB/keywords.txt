@@ -1,0 +1,19 @@
+# Class
+FingerDB	KEYWORD1
+
+# Methods and Functions 
+addUser				KEYWORD2
+deleteUser			KEYWORD2
+getUserByfingerID	KEYWORD2
+getNextUser			KEYWORD2
+getUserNames		KEYWORD2
+getUserFingers		KEYWORD2
+addFinger			KEYWORD2
+deleteFinger		KEYWORD2
+emptyDatabase		KEYWORD2
+
+# Constants
+NO_ID			LITERAL1
+NO_ID_HALF		LITERAL1
+MAX_USER		LITERAL1
+MAX_NAME		LITERAL1

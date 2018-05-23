@@ -1,0 +1,140 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Менеджер сканнера отпечатков пальцев</title>
+<style type="text/css">
+body, tr, td, input, select { font-family: Verdana, Arial, Helvetica; font-size: large; color: #000000; }
+</style>
+</head>
+
+<body onload="GetUsers();">
+
+<script>
+var get_user = window.location.search.replace('?','');
+var fingerName = [ 'Мизинец', 'Безымянный', 'Средний', 'Указательный', 'Большой' ];
+
+function byid( name )
+{
+	return document.getElementById( name );
+}
+
+function fingerCmd( q, c, id, idx )
+{
+	var xhr = new XMLHttpRequest();
+	var str = '/f_cmd?q=' + q + '&u=' + byid( 'userName' ).value + '&c=' + c + '&id=' + id + '&idx=' + idx;
+	xhr.open('GET', str, true);
+	xhr.onload = GetUsers;
+	xhr.send();
+}
+
+function getFingerName( i )
+{
+	if( i < 0 || i > 9 ) return 'Нет';
+	if( i < 5 ) return 'Левый ' + fingerName[i];
+	return 'Правый ' + fingerName[9-i];
+}
+
+function deleteFinger( idx )
+{
+	fingerCmd( 'f', 'd', '', idx );
+}
+
+function addFinger( idx )
+{
+	window.location.href = '/add_finger.html?u=' + byid('usersSelect').value + '&idx=' + idx;
+}
+
+function GetFingers()
+{
+	byid('Fingers').innerHTML = 'Ждите...';
+	user = byid('usersSelect').value;
+	byid( 'userName' ).value = user;
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', '/f_cmd?q=f&u=' + user + '&c=l', true);
+	xhr.onload = function()
+	{
+		var resp = xhr.responseText;
+		if( resp != '' )
+		{
+			var fingers = resp.split(',');
+			var str = '<table>';
+			for( i = 0; i < fingers.length; i++ )
+			{
+				if( i == 0 ) str += '<tr><td><b>Левые:</b></td></tr>';
+				if( i == 5 ) str += '<tr><td><b>Правые:</b></td></tr>';
+				str += '<tr><td>' + getFingerName( i ) + '</td><td>';
+				if( fingers[i] < 65000 ) str += '<a href="#" onclick="deleteFinger(' + i + ');" title="Удалить">Del</a>';
+				else str += '<a href="#" onclick="addFinger(' + i + ');" title="Добавить">Add</a>';
+				str += '</td></tr>';
+			}
+			str += '</table>';
+			byid('Fingers').innerHTML = str;
+		}
+		else byid('Fingers').innerHTML = 'Нет информации';
+	}
+	xhr.send();
+}
+
+function GetUsers()
+{
+	byid('Users').innerHTML = 'Ждите...';
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', '/f_cmd?q=l', true);
+	xhr.onload = function()
+	{
+		var str = '<select id="usersSelect" onchange="GetFingers();">';
+		var resp = xhr.responseText;
+		if( resp != '' )
+		{
+			var users = resp.split(',');
+			for( i = 0; i < users.length; i++ )
+			{
+				str += '<option value="' + users[i] + '"';
+				if( users[i] == get_user ) str += ' selected';
+				str += '>' + users[i] + '</option>';
+			}
+			str += '</select>';
+			byid('Users').innerHTML = str;
+			GetFingers();
+		}
+		else
+		{
+			byid('Users').innerHTML = 'Нет пользователей.';
+			byid('Fingers').innerHTML = 'Нет информации';
+		}
+	}
+	xhr.send();
+}
+
+function addUser()
+{
+	get_user = byid( 'userName' ).value;
+	fingerCmd( 'u', 'a', '', '' );
+}
+
+function deleteUser()
+{
+	fingerCmd( 'u', 'd', '', '' );
+}
+
+function emptyAll()
+{
+	fingerCmd( 'z', '', '', '' );
+}
+</script>
+<a href="/" title="Вернуться на главную"><<< Назад</a><br />
+<br />
+<input id="userName" size="8" value="Новый..." title="Имя текущего пользователя"/><br />
+<div id="Users">
+Ждите...</div>
+<input type="button" value="Добавить" onclick="addUser();" title="Добавить пользователя!!!"/>
+<input type="button" value="Удалить" onclick="deleteUser();" title="Удалить пользователя!!!"/>
+<br>
+<div id="Fingers">
+Ждите...
+</div>
+<input type="button" value="Очистить базу" onclick="emptyAll();" title="Очистить всю базу данных!!!"/>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Добавить новый отпечаток пальца</title>
+<style type="text/css">
+body, tr, td, input, select { font-family: Verdana, Arial, Helvetica; font-size: large; color: #000000; }
+</style>
+</head>
+
+<body onload="start(); refresh('60001');">
+
+<script>
+var params = window
+    .location
+    .search
+    .replace('?','')
+    .split('&')
+    .reduce(
+        function(p,e){
+            var a = e.split('=');
+            p[ decodeURIComponent(a[0])] = decodeURIComponent(a[1]);
+            return p;
+        },
+        {}
+    );
+
+var skip_flag = false;
+
+var fingerName = [ 'Мизинец', 'Безымянный', 'Средний', 'Указательный', 'Большой' ];
+
+function back() { window.location.href = "/fingers.html?" + params['u']; }
+
+function exit() { skip_flag = true; setInterval( back, 2000 ); }
+
+function getFingerName( i )
+{
+	if( i < 0 || i > 9 ) return 'Нет';
+	if( i < 5 ) return 'Левый ' + fingerName[i];
+	return 'Правый ' + fingerName[9-i];
+}
+
+function id( name )
+{
+	return document.getElementById( name );
+}
+
+function start()
+{
+	id('user').innerHTML = params['u'];
+	id('finger').innerHTML = getFingerName( params['idx']*1 );
+}
+
+function status( code )
+{
+	var str;
+	switch( code )
+	{
+		case 60001: str = '<b>Приложите</b><br />' + getFingerName( params['idx']*1 ) + ' палец'; break;
+		case 60002: str = '<b>Уберите</b> палец'; break;
+		case 60003: str = '<b>Еще раз приложите</b><br />' + getFingerName( params['idx']*1 ) + ' палец'; break;
+		case 60004: str = 'Сохраняем в базу данных'; break;
+		case 60005: str = "<b>Успешное добавление!</b><br />Пользователь: <b><i>" + params['u'] + "</i></b><br />Палец: <b><i>" + getFingerName( params['idx']*1 ) + '</i></b>'; break;
+		case 65100: str = '<b>попробуйте еще раз!</b><br />по-разному прикладывались пальцыю'; break;
+		case 65101: str = '<b>Ошибка свертки 1-го изображения!</b>'; break;
+		case 65102: str = '<b>Ошибка свертки 2-го изображения!</b>'; break;
+		case 65103: str = '<b>Ошибка поиска свободного ID!</b>'; break;
+		case 65104: str = '<b>Ошибка сохранения модели!</b>'; break;
+		case 65105:
+		default: str = '<b>Не подключен сканнер!</b>'; break;
+	}
+	id('status').innerHTML = str;
+}
+
+function refresh( resp )
+{
+	if( skip_flag ) return;
+	resp *= 1;
+	status( resp );
+	if( resp < 60005 )
+	{
+		var xhr = new XMLHttpRequest();
+		xhr.timeout = 5000;
+		xhr.ontimeout = function() { id('status').innerHTML = '<b>Таймаут</b>!!!'; exit(); };
+		var str = '/f_cmd?q=a&s=' + resp + '&u=' + params['u'] + '&idx=' + params['idx'];
+		xhr.open('GET', str, true);
+		xhr.onload = function() { refresh( xhr.responseText ); }
+		xhr.send();
+	}
+	else if( resp == 65100 )
+	{
+		skip_flag = true;
+		setInterval( function ()
+		{
+			window.location.href = "/add_finger.html?u=" + params['u'] + "&idx=" + params['idx'];
+		}, 2000 );
+	}
+	else exit();
+}
+</script>
+<a href="#" onclick="back();" title="Вернуться к пользователям"><<< Назад</a><br />
+<br />
+Добавляем пользователю:
+<div id="user">
+Ждите...
+</div>
+Отпечаток пальца:
+<div id="finger">
+Ждите...
+</div>
+<br />Статус
+<div id="status">
+Ждите...
+</div>
+</body>
+</html>

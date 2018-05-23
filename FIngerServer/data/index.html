@@ -1,0 +1,90 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Электро калитка</title>
+<meta charset="utf-8" >
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style type="text/css">
+body, tr, td, input, select { font-family: Verdana, Arial, Helvetica; font-size: large; color: #000000; }
+</style>
+</head>
+<body>
+<script>
+climate();
+setInterval( lightStatus, 1000 );
+setInterval( climate, 10000 );
+
+function byid( name )
+{
+	return document.getElementById( name );
+}
+
+function doOpen()
+{
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', '/d_cmd?q=d', true);
+	xhr.send();
+}
+
+function doLight()
+{
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', '/d_cmd?q=l&c=t', true);
+	xhr.send();
+}
+
+function lightStatus()
+{
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', '/d_cmd?q=l&c=i', true);
+	xhr.onload = function()
+	{
+		var id = byid( 'light_text' );
+		if( xhr.responseText == '1' )
+		{
+			id.innerHTML = 'Выключить<br />свет';
+			id.style.color = 'red';
+		}
+		else
+		{
+			id.innerHTML = 'Включить<br />свет';
+			id.style.color = 'black';
+		}
+	}
+	xhr.send();
+}
+
+
+function climate()
+{
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', '/d_cmd?q=t', true);
+	xhr.onload = function()
+	{
+		var clim = xhr.responseText.split(',');
+		byid( 'c_txt' ).innerHTML = "Температура: " + (clim[0]).slice(0, -1) + "\u00B0<br />Влажность: " + (clim[1]).slice(0, -1) + "%";
+	}
+	xhr.send();
+}
+</script>
+<button id="open_button" onclick="doOpen();">
+<table style="width:300px">
+<tr>
+<td style="height:150px">Открыть<br />дверь</td>
+</tr>
+</table>
+</button>
+<br />
+<button id="light_button" onclick="doLight();">
+<table style="width:300px">
+<tr>
+<td id="light_text" style="height:150px">Свет.</td>
+</tr>
+</table>
+</button>
+<br />
+<div id="c_txt" align="center" style="width:300px">
+Ждите...
+</div>
+</body>
+</html>
